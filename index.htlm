@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เกมตอบคำถามเทคโนโลยีไทย</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .quiz-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+        .header {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        .question-card {
+            background-color: #e2f0fb;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        .option-button {
+            width: 100%;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #edf2f7;
+            border: 2px solid #cbd5e0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            text-align: left;
+        }
+        .option-button:hover:not(.correct):not(.incorrect) {
+            background-color: #e2e8f0;
+            transform: translateY(-2px);
+        }
+        .option-button.correct {
+            background-color: #c6f6d5;
+            border-color: #68d391;
+            transform: scale(1.02);
+        }
+        .option-button.incorrect {
+            background-color: #fed7d7;
+            border-color: #f56565;
+            transform: scale(1.02);
+        }
+        .feedback {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            min-height: 30px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .feedback.show {
+            opacity: 1;
+        }
+        .next-button {
+            padding: 12px 24px;
+            background-color: #3182ce;
+            color: #fff;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .next-button:hover {
+            background-color: #2b6cb0;
+            transform: translateY(-2px);
+        }
+        .next-button:disabled {
+            background-color: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .score-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+        .result-message {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-top: 20px;
+            color: #2c5282;
+            animation: slideIn 0.5s ease-out;
+        }
+        .restart-button {
+            background-color: #4a5568;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            margin-top: 20px;
+        }
+        .restart-button:hover {
+            background-color: #2d3748;
+            transform: translateY(-2px);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+<div class="quiz-container">
+    <h1 class="header">เกมตอบคำถามเทคโนโลยีไทย</h1>
+    
+    <div id="quiz-screen">
+        <div class="question-card">
+            <div id="question-text" class="question-text"></div>
+            <div id="options-grid" class="options-grid"></div>
+        </div>
+        <div id="feedback" class="feedback"></div>
+        <button id="next-button" class="next-button" disabled>ข้อต่อไป</button>
+    </div>
+
+    <div id="result-screen" class="hidden">
+        <div class="score-display">คะแนนของคุณคือ: <span id="final-score">0</span> / <span id="total-questions">0</span></div>
+        <div id="result-message" class="result-message"></div>
+        <button id="restart-button" class="restart-button">เล่นอีกครั้ง</button>
+    </div>
+
+</div>
+
+<script>
+    const questions = [
+        {
+            question: "ประเทศไทยกำลังพัฒนาระเบียงเศรษฐกิจพิเศษภาคตะวันออก (EEC) เพื่อส่งเสริมอุตสาหกรรมใด?",
+            options: ["อุตสาหกรรมท่องเที่ยว", "อุตสาหกรรมยานยนต์สมัยใหม่", "อุตสาหกรรมเกษตรกรรมดั้งเดิม", "อุตสาหกรรมสิ่งทอ"],
+            answer: "อุตสาหกรรมยานยนต์สมัยใหม่"
+        },
+        {
+            question: "แอปพลิเคชัน 'เป๋าตัง' เป็นส่วนหนึ่งของนโยบายใดของรัฐบาลไทย?",
+            options: ["นโยบายส่งเสริมการท่องเที่ยว", "นโยบายการเงินดิจิทัล", "นโยบายสวัสดิการแห่งรัฐ", "นโยบายสุขภาพแห่งชาติ"],
+            answer: "นโยบายการเงินดิจิทัล"
+        },
+        {
+            question: "โครงการ '5G' ในประเทศไทยส่วนใหญ่เน้นการใช้งานในด้านใด?",
+            options: ["การสื่อสารส่วนบุคคล", "การแพทย์ทางไกลและการเกษตรอัจฉริยะ", "การบันเทิง", "การค้าปลีก"],
+            answer: "การแพทย์ทางไกลและการเกษตรอัจฉริยะ"
+        },
+        {
+            question: "องค์กรใดในประเทศไทยที่มีบทบาทสำคัญในการส่งเสริมเศรษฐกิจดิจิทัล?",
+            options: ["การไฟฟ้าฝ่ายผลิตแห่งประเทศไทย (EGAT)", "การรถไฟแห่งประเทศไทย (SRT)", "สำนักงานส่งเสริมเศรษฐกิจดิจิทัล (depa)", "การท่องเที่ยวแห่งประเทศไทย (TAT)"],
+            answer: "สำนักงานส่งเสริมเศรษฐกิจดิจิทัล (depa)"
+        },
+        {
+            question: "เทคโนโลยีใดที่รัฐบาลไทยกำลังผลักดันเพื่อเพิ่มประสิทธิภาพการจัดการน้ำ?",
+            options: ["ระบบโซลาร์เซลล์", "ระบบ AI และ IoT", "ระบบการสื่อสารผ่านดาวเทียม", "ระบบขนส่งมวลชน"],
+            answer: "ระบบ AI และ IoT"
+        },
+        {
+            question: "โครงการ 'Thai QR Payment' มีวัตถุประสงค์หลักเพื่ออะไร?",
+            options: ["ส่งเสริมการใช้เงินสด", "ลดความซับซ้อนในการชำระเงิน", "ส่งเสริมการออม", "ลดการใช้บัตรเครดิต"],
+            answer: "ลดความซับซ้อนในการชำระเงิน"
+        },
+        {
+            question: "ประเทศไทยกำลังให้ความสำคัญกับการพัฒนา 'อุตสาหกรรมดิจิทัลคอนเทนต์' ซึ่งรวมถึงสิ่งใดบ้าง?",
+            options: ["ภาพยนตร์, แอนิเมชัน, และเกม", "สินค้าหัตถกรรม", "ผลิตภัณฑ์จากยางพารา", "ข้าวและผลไม้"],
+            answer: "ภาพยนตร์, แอนิเมชัน, และเกม"
+        },
+        {
+            question: "หน่วยงานภาครัฐใดที่รับผิดชอบหลักในการวางแผนและกำหนดนโยบายเทคโนโลยีสารสนเทศของประเทศ?",
+            options: ["กระทรวงการคลัง", "กระทรวงดิจิทัลเพื่อเศรษฐกิจและสังคม", "กระทรวงศึกษาธิการ", "กระทรวงสาธารณสุข"],
+            answer: "กระทรวงดิจิทัลเพื่อเศรษฐกิจและสังคม"
+        },
+        {
+            question: "ประเทศไทยมีการลงทุนด้าน 'สตาร์ทอัพ' โดยเฉพาะในกลุ่มใด?",
+            options: ["กลุ่ม FinTech และ E-commerce", "กลุ่มอุตสาหกรรมหนัก", "กลุ่มการเกษตรดั้งเดิม", "กลุ่มการประมง"],
+            answer: "กลุ่ม FinTech และ E-commerce"
+        },
+        {
+            question: "นโยบาย 'Thailand 4.0' มุ่งเน้นการเปลี่ยนผ่านเศรษฐกิจไปสู่เศรษฐกิจที่ขับเคลื่อนด้วยอะไร?",
+            options: ["แรงงานราคาถูก", "เกษตรกรรม", "อุตสาหกรรมหนัก", "นวัตกรรมและเทคโนโลยี"],
+            answer: "นวัตกรรมและเทคโนโลยี"
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let answered = false;
+
+    const questionTextElement = document.getElementById('question-text');
+    const optionsGridElement = document.getElementById('options-grid');
+    const nextButton = document.getElementById('next-button');
+    const feedbackElement = document.getElementById('feedback');
+    const quizScreen = document.getElementById('quiz-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const finalScoreElement = document.getElementById('final-score');
+    const totalQuestionsElement = document.getElementById('total-questions');
+    const resultMessageElement = document.getElementById('result-message');
+    const restartButton = document.getElementById('restart-button');
+
+    function showQuestion() {
+        if (currentQuestionIndex >= questions.length) {
+            showResult();
+            return;
+        }
+
+        const currentQuestion = questions[currentQuestionIndex];
+        questionTextElement.textContent = currentQuestion.question;
+        optionsGridElement.innerHTML = '';
+        feedbackElement.textContent = '';
+        feedbackElement.classList.remove('show', 'text-green-600', 'text-red-600');
+        nextButton.disabled = true;
+        answered = false;
+
+        currentQuestion.options.forEach(option => {
+            const button = document.createElement('button');
+            button.textContent = option;
+            button.classList.add('option-button');
+            button.addEventListener('click', () => checkAnswer(option, currentQuestion.answer, button));
+            optionsGridElement.appendChild(button);
+        });
+    }
+
+    function checkAnswer(selectedOption, correctAnswer, button) {
+        if (answered) return;
+        answered = true;
+        
+        const allButtons = optionsGridElement.querySelectorAll('.option-button');
+        allButtons.forEach(btn => btn.disabled = true);
+
+        if (selectedOption === correctAnswer) {
+            score++;
+            button.classList.add('correct');
+            feedbackElement.textContent = 'ถูกต้อง!';
+            feedbackElement.classList.add('show', 'text-green-600');
+        } else {
+            button.classList.add('incorrect');
+            const correctButton = Array.from(allButtons).find(btn => btn.textContent === correctAnswer);
+            if (correctButton) {
+                correctButton.classList.add('correct');
+            }
+            feedbackElement.textContent = `ผิด! คำตอบที่ถูกต้องคือ: ${correctAnswer}`;
+            feedbackElement.classList.add('show', 'text-red-600');
+        }
+
+        nextButton.disabled = false;
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            showQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        quizScreen.classList.add('hidden');
+        resultScreen.classList.remove('hidden');
+        finalScoreElement.textContent = score;
+        totalQuestionsElement.textContent = questions.length;
+
+        const percentage = (score / questions.length) * 100;
+        let message = '';
+        if (percentage >= 80) {
+            message = 'ยอดเยี่ยม! คุณมีความรู้ด้านเทคโนโลยีไทยเป็นอย่างดี!';
+        } else if (percentage >= 50) {
+            message = 'ดีมาก! คุณมีความรู้พอสมควร';
+        } else {
+            message = 'ลองศึกษาเพิ่มเติมดูนะ!';
+        }
+        resultMessageElement.textContent = message;
+    }
+
+    function restartQuiz() {
+        currentQuestionIndex = 0;
+        score = 0;
+        answered = false;
+        resultScreen.classList.add('hidden');
+        quizScreen.classList.remove('hidden');
+        showQuestion();
+    }
+
+    nextButton.addEventListener('click', nextQuestion);
+    restartButton.addEventListener('click', restartQuiz);
+
+    showQuestion();
+</script>
+
+</body>
+</html>
